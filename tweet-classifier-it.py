@@ -24,7 +24,8 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
             payload = self.classify_rain(payload)
             payload = self.geo_locate(payload)
         else:
-            payload["lews-meta-it_class_flag"] = "NA"
+            print("Not an italian tweet")
+            return None
         return payload
 
     def classify_landslip(self, tweet_record):
