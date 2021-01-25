@@ -17,9 +17,8 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
 
     def process_message(self, message):
         payload = message.value
-        # if payload.get("lews_meta_detected_lang") == "it" \
-        #         or payload.get("lang") == "it":
-        if payload.get("lang") == "it":
+        if payload.get("lews_meta_detected_lang") == "it" \
+                and payload.get("lang") == "it":
             payload["lews-meta-it_class_flag"] = "True"
             payload = self.classify_landslip(payload)
             payload = self.classify_rain(payload)
