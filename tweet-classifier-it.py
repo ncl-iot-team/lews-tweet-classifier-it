@@ -23,9 +23,9 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
             payload = self.classify_landslip(payload)
             payload = self.classify_rain(payload)
             payload = self.geo_locate(payload)
-            logger.debug(payload)
+            #logger.debug(payload)
         else:
-            logger.info("Not an italian tweet")
+            #logger.info("Not an italian tweet")
             return None
         return payload
 
