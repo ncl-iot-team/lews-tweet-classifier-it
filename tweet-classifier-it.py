@@ -2,6 +2,7 @@ from procstream import StreamProcessMicroService
 import os
 import logging as logger
 import spacy
+import pycountry
 from geoextract import GeoLookup, osm_lookup_place
 
 config = {"MODULE_NAME": os.environ.get('MODULE_NAME', 'LEWS_LANG_DETECT'),
@@ -67,6 +68,7 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         extracted = self.geo_lookup_object.get_geotag(cleaned_text)
         duplicate_removed = self.remove_duplicate(extracted)
         valid_places = self.country_filter(duplicate_removed)
+        print("Valid place : ",valid_places)
         locations = []
         for place in valid_places:
             if place != (None, None):
@@ -75,6 +77,12 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
                     locations.append({'lat': location[1], 'lon': location[0]})
         if len(locations) > 0:
             tweet_record['lews-meta-it_location'] = locations
+
+        '''
+        Geo reformat to iso 3166-2
+        '''
+        tweet_record['lews-meta-it_location_ISO3166-2'] = pycountry.countries.get(alpha_2=valid_places[0]).alpha_2
+
         return tweet_record
 
     # def geo_extraction(self, data):
