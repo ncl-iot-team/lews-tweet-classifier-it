@@ -64,11 +64,12 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         return in_the_country
 
     def geo_locate(self, tweet_record):
+        logger.debug("geo_locate start !")
         cleaned_text = self.data_clean(tweet_record.get("text"))
         extracted = self.geo_lookup_object.get_geotag(cleaned_text)
         duplicate_removed = self.remove_duplicate(extracted)
         valid_places = self.country_filter(duplicate_removed)
-        print("Valid place : ",valid_places)
+        logger.debug("Valid place : ",valid_places)
         locations = []
         for place in valid_places:
             if place != (None, None):
@@ -82,6 +83,8 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         Geo reformat to iso 3166-2
         '''
         tweet_record['lews-meta-it_location_ISO3166-2'] = pycountry.countries.get(alpha_2=valid_places[0]).alpha_2
+
+        logger.debug("tweet_record['lews-meta-it_location_ISO3166-2'] : ",tweet_record['lews-meta-it_location_ISO3166-2'] )
 
         return tweet_record
 
