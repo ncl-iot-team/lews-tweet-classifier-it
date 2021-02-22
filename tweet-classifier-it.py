@@ -2,7 +2,8 @@ from procstream import StreamProcessMicroService
 import os
 import logging as logger
 import spacy
-import pycountry
+# import pycountry
+from geopy.geocoders import Nominatim
 from geoextract import GeoLookup, osm_lookup_place
 
 config = {"MODULE_NAME": os.environ.get('MODULE_NAME', 'LEWS_LANG_DETECT'),
@@ -24,6 +25,7 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
             payload = self.classify_landslip(payload)
             payload = self.classify_rain(payload)
             payload = self.geo_locate(payload)
+            self.geo_extraction(payload)
             #logger.debug(payload)
         else:
             #logger.info("Not an italian tweet")
@@ -79,38 +81,53 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         if len(locations) > 0:
             tweet_record['lews-meta-it_location'] = locations
 
-        '''
-        Geo reformat to iso 3166-2
-        '''
-        tweet_record['lews-meta-it_location_ISO3166-2'] = pycountry.countries.get(alpha_2=valid_places[0]).alpha_2
-
-        logger.debug("tweet_record['lews-meta-it_location_ISO3166-2'] : ",tweet_record['lews-meta-it_location_ISO3166-2'] )
-
         return tweet_record
 
-    # def geo_extraction(self, data):
-    #
-    #     # 创建 两个列  经纬度
-    #     data['lews-metadata_longitude'] = None
-    #     data['lews-metadata_latitude'] = None
-    #
-    #     for index, row in data.iterrows():
-    #         # TODO 同样需要多种类型判断
-    #         if type(row["text"]) is not float:
-    #             cleaned_text = self.data_clean(row["text"])
-    #             extracted = self.geo_lookup_object.get_geotag(cleaned_text)
-    #             duplicate_removed = self.remove_duplicate(extracted)
-    #             valid_places = self.country_filter(duplicate_removed)
-    #             paired_location = []
-    #             for place in valid_places:
-    #                 if place != (None, None):
-    #                     location = self.geo_lookup_object.geo_cache(place)
-    #                     if location != (None, None):
-    #                         paired_location = location
-    #             if len(paired_location) > 0:
-    #                 data.loc[index, ('lews-metadata_longitude', 'lews-metadata_latitude')] = paired_location
-    #
-    #     return
+    def geo_extraction(self, data):
+
+        # 创建 两个列  经纬度
+        data['lews-metadata_longitude'] = None
+        data['lews-metadata_latitude'] = None
+
+        for index, row in data.iterrows():
+            # TODO 同样需要多种类型判断
+            if type(row["text"]) is not float:
+                cleaned_text = self.data_clean(row["text"])
+                extracted = self.geo_lookup_object.get_geotag(cleaned_text)
+                duplicate_removed = self.remove_duplicate(extracted)
+                valid_places = self.country_filter(duplicate_removed)
+                paired_location = []
+                for place in valid_places:
+                    if place != (None, None):
+                        location = self.geo_lookup_object.geo_cache(place)
+                        if location != (None, None):
+                            paired_location = location
+                if len(paired_location) > 0:
+                    data.loc[index, ('lews-metadata_longitude', 'lews-metadata_latitude')] = paired_location
+
+                    '''
+                    Geo reformat to iso 3166-2
+                    '''
+
+                    try:
+                        geolocator = Nominatim(user_agent='myuseragent')
+                        location = geolocator.reverse(paired_location[0]+','+paired_location[1])
+
+                        logger.debug("location address : ")
+                        logger.debug(location.address)
+
+                        data.loc[index, ('lews-meta-it_location_address')] = location.address
+
+                        # tweet_record['lews-meta-it_location_ISO3166-2'] = pycountry.countries.get(
+                        #     alpha_2=valid_places[0]).alpha_2
+                        #
+                        # logger.debug("tweet_record['lews-meta-it_location_ISO3166-2'] : ",
+                        #              tweet_record['lews-meta-it_location_ISO3166-2'])
+
+                    except:
+                        print('not found')
+
+        return
 
     # def detection(self, model, new_col, data):
     #

@@ -1,3 +1,3 @@
 -e git://github.com/nipunbalan/procstream-kafka-python.git#egg=procestream_kafka_python
-spacy
-pycountry
+spacy==2.3.3
+geopy
