@@ -115,15 +115,20 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
                     geolocator = Nominatim(user_agent='myuseragent')
                     location = geolocator.reverse(str(paired_location[0])+','+str(paired_location[1]))
 
-                    print("location address : ")
-                    print(location.address)
+                    print("location address raw : ")
+                    print(location.raw)
 
                     data['lews-meta-it_location_address'] = location.address
-                    data['lews-meta-it_location_address_city'] = location.raw["address"]["city"]
-                    data['lews-meta-it_location_address_city_district'] = location.raw["address"]["city_district"]
-                    data['lews-meta-it_location_address_city_ISO3166-2_with_country'] = get_ISO3166_citycode("IT-"+location.raw["address"]["city"])
-                    data['lews-meta-it_location_address_city_ISO3166-2'] = get_ISO3166_citycode(location.raw["address"]["city"])
 
+                    if "address" in location.raw:
+                        if "city" in location.raw["address"]:
+                            data['lews-meta-it_location_address_city'] = location.raw["address"]["city"]
+                            data['lews-meta-it_location_address_city_ISO3166-2'] = get_ISO3166_citycode(
+                                location.raw["address"]["city"])
+                            data['lews-meta-it_location_address_city_ISO3166-2_with_country'] = get_ISO3166_citycode(
+                                "IT-" + location.raw["address"]["city"])
+                        if "city_district" in location.raw["address"]:
+                            data['lews-meta-it_location_address_city_district'] = location.raw["address"]["city_district"]
 
                 except:
                     print('Geo info not found')
