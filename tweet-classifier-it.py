@@ -2,7 +2,7 @@ from procstream import StreamProcessMicroService
 import os
 import logging as logger
 import spacy
-# import pycountry
+import pycountry
 from geopy.geocoders import Nominatim
 from geoextract import GeoLookup, osm_lookup_place
 
@@ -18,6 +18,7 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         self.geo_lookup_object = geo_lookup_object
 
     def process_message(self, message):
+        print("开始process  意大利数据")
         payload = message.value
         if payload.get("lews_meta_detected_lang") == "it" \
                 and payload.get("lang") == "it":
@@ -113,8 +114,8 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
                         geolocator = Nominatim(user_agent='myuseragent')
                         location = geolocator.reverse(paired_location[0]+','+paired_location[1])
 
-                        logger.debug("location address : ")
-                        logger.debug(location.address)
+                        print("location address : ")
+                        print(location.address)
 
                         data.loc[index, ('lews-meta-it_location_address')] = location.address
 
@@ -156,6 +157,6 @@ def main():
                                                    geo_lookup_object)
     k_service.start_service()
 
-
 if __name__ == "__main__":
     main()
+
