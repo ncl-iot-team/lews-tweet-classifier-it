@@ -17,15 +17,15 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
         self.geo_lookup_object = geo_lookup_object
 
     def process_message(self, message):
-        print("开始process  意大利数据")
         payload = message.value
         if payload.get("lews_meta_detected_lang") == "it" \
                 and payload.get("lang") == "it":
+            print("开始process  意大利数据")
             payload["lews-meta-it_class_flag"] = "True"
-            payload = self.geo_extraction(payload)
             payload = self.classify_landslip(payload)
             payload = self.classify_rain(payload)
-            payload = self.geo_locate(payload)
+            payload = self.geo_extraction(payload)
+
 
             #logger.debug(payload)
         else:
@@ -66,26 +66,27 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
                 in_the_country[place] = places
         return in_the_country
 
-    def geo_locate(self, tweet_record):
-        logger.debug("geo_locate start !")
-        cleaned_text = self.data_clean(tweet_record.get("text"))
-        extracted = self.geo_lookup_object.get_geotag(cleaned_text)
-        duplicate_removed = self.remove_duplicate(extracted)
-        valid_places = self.country_filter(duplicate_removed)
-        logger.debug("Valid place : ",valid_places)
-        locations = []
-        for place in valid_places:
-            if place != (None, None):
-                location = self.geo_lookup_object.geo_cache(place)
-                if location != (None, None):
-                    locations.append({'lat': location[1], 'lon': location[0]})
-        if len(locations) > 0:
-            tweet_record['lews-meta-it_location'] = locations
+    # def geo_locate(self, tweet_record):
+    #     logger.debug("geo_locate start !")
+    #     cleaned_text = self.data_clean(tweet_record.get("text"))
+    #     extracted = self.geo_lookup_object.get_geotag(cleaned_text)
+    #     duplicate_removed = self.remove_duplicate(extracted)
+    #     valid_places = self.country_filter(duplicate_removed)
+    #     logger.debug("Valid place : ",valid_places)
+    #     locations = []
+    #     for place in valid_places:
+    #         if place != (None, None):
+    #             location = self.geo_lookup_object.geo_cache(place)
+    #             if location != (None, None):
+    #                 locations.append({'lat': location[1], 'lon': location[0]})
+    #     if len(locations) > 0:
+    #         tweet_record['lews-meta-it_location'] = locations
+    #
+    #     return tweet_record
 
-        return tweet_record
+    def geo_extraction(self, parm_data):
 
-    def geo_extraction(self, data):
-
+        data = parm_data
         # 创建 两个列  经纬度
         # data['lews-metadata_longitude'] = None
         # data['lews-metadata_latitude'] = None
@@ -112,7 +113,7 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
 
                 try:
                     geolocator = Nominatim(user_agent='myuseragent')
-                    location = geolocator.reverse(paired_location[0]+','+paired_location[1])
+                    location = geolocator.reverse(str(paired_location[0])+','+str(paired_location[1]))
 
                     print("location address : ")
                     print(location.address)
@@ -125,7 +126,8 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
 
 
                 except:
-                    print('not found')
+                    print('Geo info not found')
+                    return data
 
         return data
 
