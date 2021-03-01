@@ -87,9 +87,6 @@ class StreamProcessClassifyItalianTweets(StreamProcessMicroService):
     def geo_extraction(self, parm_data):
 
         data = parm_data
-        # 创建 两个列  经纬度
-        # data['lews-metadata_longitude'] = None
-        # data['lews-metadata_latitude'] = None
 
         # TODO 同样需要多种类型判断
         if type(data["text"]) is not float:
